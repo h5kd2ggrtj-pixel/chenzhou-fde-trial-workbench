@@ -645,7 +645,12 @@ dateInput.addEventListener("change",function(){
     return;
   }
   var title=document.getElementById("formTitle");
-  if(editingDate&&target!==editingDate){title.textContent="修改 "+editingDate+" 的记录，日期改为 "+target;dirty=true;}
+  if(editingDate&&target!==editingDate){
+    // Moving a record must be explicit; otherwise start a new entry and leave the old day untouched.
+    var move=confirm("要把 "+dayLabel(editingDate)+" 的记录改到 "+dayLabel(target)+" 吗？\n\n确定：改日期，"+dayLabel(editingDate)+" 将不再有记录。\n取消：新记 "+dayLabel(target)+"，"+dayLabel(editingDate)+" 保持不变"+(dirty?"（刚才没保存的修改会放弃）":"")+"。");
+    if(!move){resetForm(target);return;}
+    title.textContent="修改 "+editingDate+" 的记录，日期改为 "+target;dirty=true;
+  }
   else if(editingDate)title.textContent="修改 "+editingDate+" 的记录";
   lastDate=target;
 });
