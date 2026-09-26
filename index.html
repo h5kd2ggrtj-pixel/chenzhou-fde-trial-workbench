@@ -8,7 +8,7 @@
 <style>
 :root{--ink:#1d2b28;--muted:#70807a;--line:#e4eae6;--paper:#f5f8f5;--white:#fff;--green:#176b50;--green2:#e8f3ed;--gold:#d79835;--red:#b84c45;--shadow:0 8px 28px rgba(29,43,40,.06)}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
-button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;margin:auto;padding:26px 28px 48px}
+[hidden]{display:none!important}button,input,select,textarea{font:inherit}button{cursor:pointer}.shell{max-width:1280px;margin:auto;padding:26px 28px 48px}
 header{display:flex;justify-content:space-between;align-items:center;gap:18px;background:#173f35;color:white;padding:22px 26px;border-radius:18px;box-shadow:var(--shadow)}
 .brand{display:flex;align-items:center;gap:14px}.mark{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#ffffff1f;font-size:24px}.brand strong{font-size:16px;letter-spacing:.03em}.brand small{display:block;color:#c9ded4;margin-top:2px}.badge{border:1px solid #ffffff45;color:#e5f0e9;border-radius:999px;padding:6px 11px;font-size:12px;white-space:nowrap}
 h1{font-size:27px;line-height:1.25;margin:27px 0 7px;letter-spacing:-.02em}.lead{margin:0 0 20px;color:var(--muted)}
@@ -27,6 +27,11 @@ input:focus,select:focus{outline:3px solid #176b5024;border-color:var(--green)}
 .storage{margin:14px 0 0;color:#74817b;font-size:11px;display:flex;gap:7px;align-items:start}.dot{width:7px;height:7px;border-radius:50%;background:#55a779;flex:0 0 auto;margin-top:6px}
 .file-input{display:none}.action-link{border:0;background:none;color:var(--green);padding:3px 5px;font-size:11px;font-weight:700}.row-actions{display:flex;gap:4px}
 footer{text-align:center;color:#96a19b;font-size:11px;padding:20px 0 0}
+textarea{width:100%;border:1px solid #d9e1dc;border-radius:9px;padding:10px 11px;font-size:13px;line-height:1.55;color:var(--ink);background:#fff;resize:vertical}
+.incoming{background:#fff5df;border:1px solid #f0d9a8;border-radius:13px;padding:14px 16px;margin-bottom:17px;font-size:13px;line-height:1.6}
+.share{margin-top:14px;border:1px solid #cfe5d8;background:#f3faf6;border-radius:12px;padding:14px}.share-head{margin-bottom:9px}.share-head span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(20,32,28,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:12px}.sheet{background:#fff;border-radius:16px;padding:18px;max-width:560px;width:100%;max-height:90vh;overflow:auto}.small{font-size:12px;color:var(--muted);margin:0 0 9px;line-height:1.6}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#173f35;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:30;max-width:90%;text-align:center;box-shadow:var(--shadow)}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.shell{padding:13px 12px 32px}header{padding:16px;border-radius:14px}.badge{font-size:10px}.brand strong{font-size:14px}.brand small{font-size:11px}h1{font-size:23px;margin-top:22px}.metrics{gap:8px}.metric{padding:12px}.metric .value{font-size:21px}.fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wide{grid-column:span 2}.card{padding:15px}.toolbar .btn{flex:1}.toolbar label{width:100%}.toolbar input{width:100%}}
 </style>
@@ -35,18 +40,20 @@ footer{text-align:center;color:#96a19b;font-size:11px;padding:20px 0 0}
 <div class="shell">
 <header>
   <div class="brand"><div class="mark">粤</div><div><strong>民权路粤菜店 · FDE经营工作台</strong><small>先把经营数据记清，再一起定获客动作</small></div></div>
-  <div class="badge">首月试用 · 本机版</div>
+  <div class="badge">首月试用 · 微信群汇总</div>
 </header>
 <main>
+  <div id="incoming" class="incoming" hidden>
+    <div id="incomingText"></div>
+    <div class="form-actions"><button class="btn primary" type="button" id="incomingAccept">汇入本机汇总</button><button class="btn" type="button" id="incomingDismiss">不汇入</button></div>
+  </div>
   <h1>今天的经营数据，收档时填一次</h1>
-  <p class="lead">一行记一天，不用逐桌登记；周汇总和月汇总自动生成。</p>
+  <p class="lead">一行记一天，不用逐桌登记；保存后把日报发到店里微信群，老板点开链接就汇总。</p>
   <div class="toolbar">
     <label for="monthPicker">查看月份</label>
     <input id="monthPicker" type="month">
-    <button class="btn subtle" id="exportCsv">导出本月 CSV</button>
-    <button class="btn" id="exportJson">备份全部记录</button>
-    <button class="btn" id="importButton">导入备份</button>
-    <input class="file-input" id="importFile" type="file" accept=".json,application/json">
+    <button class="btn subtle" id="exportCsv">导出本月表格</button>
+    <button class="btn" id="openBackup">备份 / 导入</button>
   </div>
 
   <section class="metrics">
@@ -63,7 +70,7 @@ footer{text-align:center;color:#96a19b;font-size:11px;padding:20px 0 0}
         <div class="fields">
           <div class="field"><label for="date">记录日期</label><input id="date" name="date" type="date" required></div>
           <div class="field"><label for="status">营业状态</label><select id="status" name="status"><option value="营业">营业</option><option value="休息">休息</option></select></div>
-          <div class="field"></div>
+          <div class="field"><label for="filler">填写人（选填）</label><input id="filler" name="filler" type="text" maxlength="20" placeholder="例如：小王"></div>
 
           <div class="section-title wide">经营总量</div>
           <div class="field"><label for="visits">到店人次</label><input id="visits" name="visits" type="number" min="0" step="1" required placeholder="例如：86"><div class="hint">按每次到店计，熟客再次到店也计一次。</div></div>
@@ -73,21 +80,26 @@ footer{text-align:center;color:#96a19b;font-size:11px;padding:20px 0 0}
           <div class="section-title wide">客群结构</div>
           <div class="field"><label for="regular">熟客人次</label><input id="regular" name="regular" type="number" min="0" step="1" required placeholder="没有填 0"></div>
           <div class="field"><label for="newGuests">新客人次</label><input id="newGuests" name="newGuests" type="number" min="0" step="1" required placeholder="没有填 0"></div>
-          <div class="field"><label for="unknown">身份未知人次</label><input id="unknown" name="unknown" type="number" min="0" step="1" required placeholder="暂时分不清的客人"></div>
-          <div class="field"><label for="referrals">老客介绍的新客人次</label><input id="referrals" name="referrals" type="number" min="0" step="1" required placeholder="是新客人次的子项"></div>
+          <div class="field"><label for="unknown">身份未知人次</label><input id="unknown" name="unknown" type="number" min="0" step="1" required placeholder="分不清填这里"></div>
+          <div class="field"><label for="referrals">老客介绍的新客人次</label><input id="referrals" name="referrals" type="number" min="0" step="1" required placeholder="新客中的一部分"></div>
 
           <div class="section-title wide">商务宴请（可与熟客、新客重叠）</div>
           <div class="field"><label for="banquets">宴请场次</label><input id="banquets" name="banquets" type="number" min="0" step="1" required placeholder="一次宴请算一场"></div>
           <div class="field"><label for="banquetTables">宴请桌数</label><input id="banquetTables" name="banquetTables" type="number" min="0" step="1" required placeholder="没有填 0"></div>
-          <div class="field"><label for="banquetVisits">宴请人次</label><input id="banquetVisits" name="banquetVisits" type="number" min="0" step="1" required placeholder="宴请客人的到店人次"></div>
-          <div class="field"><label for="banquetRegular">宴请中的熟客人次</label><input id="banquetRegular" name="banquetRegular" type="number" min="0" step="1" required placeholder="宴请客人中的熟客"></div>
+          <div class="field"><label for="banquetVisits">宴请人次</label><input id="banquetVisits" name="banquetVisits" type="number" min="0" step="1" required placeholder="没有填 0"></div>
+          <div class="field"><label for="banquetRegular">宴请中的熟客人次</label><input id="banquetRegular" name="banquetRegular" type="number" min="0" step="1" required placeholder="没有填 0"></div>
           <div class="field wide"><label for="note">备注（选填）</label><input id="note" name="note" type="text" maxlength="160" placeholder="例如：老客介绍、商务接待、活动情况"></div>
         </div>
         <div id="checkMessage" class="check">填完后会提示人数口径是否需要核对。</div>
         <div class="form-actions"><button class="btn primary" type="submit" id="saveButton">保存当天记录</button><button class="btn" type="button" id="newButton">新建一条</button><span id="saveHint" class="pill">保存后自动更新汇总</span></div>
       </form>
+      <div id="sharePanel" class="share" hidden>
+        <div class="share-head"><strong id="shareTitle">发到店里微信群</strong><span>点“复制日报”，到群里长按粘贴发送。老板点开日报里的链接，这天的数据会汇入他的汇总。</span></div>
+        <textarea id="shareText" rows="7" readonly></textarea>
+        <div class="form-actions"><button class="btn primary" type="button" id="copyShare">复制日报</button><button class="btn" type="button" id="closeShare">收起</button></div>
+      </div>
       <div class="notice">只按人次和汇总金额记录，不需要顾客姓名或电话。老客介绍、商务宴请和熟客身份是可以重叠的统计维度，不要相加当作总客流。</div>
-      <div class="storage"><span class="dot"></span><span>数据保存在这台设备的当前浏览器中。换设备或换浏览器前，请先点“备份全部记录”。</span></div>
+      <div class="storage"><span class="dot"></span><span>数据只存在这台手机的当前浏览器里。每天保存后把日报发到群里，群聊记录就是备份；换手机前用“备份 / 导入”搬数据。</span></div>
     </section>
 
     <aside>
@@ -111,22 +123,45 @@ footer{text-align:center;color:#96a19b;font-size:11px;padding:20px 0 0}
     </table></div>
   </section>
 </main>
-<footer>民权路粤菜店 FDE 首月记录 · 本地单机试用页面</footer>
+<footer>民权路粤菜店 FDE 首月记录 · 数据存在各自手机，靠微信群日报汇总</footer>
 </div>
+
+<div id="backupPanel" class="overlay" hidden>
+  <div class="sheet">
+    <div class="cardhead"><div><h2>备份 / 导入</h2><p>微信里不能下载文件，用复制粘贴搬数据。</p></div><button class="btn" type="button" id="closeBackup">关闭</button></div>
+    <div class="section-title">备份这台手机的全部记录</div>
+    <p class="small">点“复制备份码”，发到微信“文件传输助手”或存进收藏。换手机后，把备份码粘贴到下面导入。</p>
+    <div class="form-actions"><button class="btn primary" type="button" id="copyBackup">复制备份码</button><button class="btn" type="button" id="downloadBackup">下载备份文件</button></div>
+    <textarea id="backupText" rows="3" readonly hidden></textarea>
+    <div class="section-title">导入</div>
+    <p class="small">可以粘贴备份码，也可以一次粘贴一条或多条群里的日报。同一天的记录以导入的内容为准。</p>
+    <textarea id="importText" rows="6" placeholder="在这里长按粘贴"></textarea>
+    <div class="form-actions"><button class="btn primary" type="button" id="importPasted">导入粘贴内容</button><button class="btn" type="button" id="importButton">选择备份文件</button></div>
+    <input class="file-input" id="importFile" type="file" accept=".json,application/json">
+    <div id="importResult" class="check" hidden></div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
 
 <script>
 (function(){
 "use strict";
 var KEY="fde-minquan-restaurant-v1";
+var FILLER_KEY="fde-minquan-filler";
 var form=document.getElementById("entryForm");
 var monthPicker=document.getElementById("monthPicker");
 var dateInput=document.getElementById("date");
 var statusInput=document.getElementById("status");
+var fillerInput=document.getElementById("filler");
 var message=document.getElementById("checkMessage");
 var fields=["visits","tables","regular","newGuests","unknown","referrals","banquets","banquetTables","banquetVisits","banquetRegular","revenue"];
-var countFields=["visits","tables","regular","newGuests","unknown","referrals","banquets","banquetTables","banquetVisits","banquetRegular"];
+// Order is part of the share-link format; append new keys only at the end.
+var shareKeys=["date","status"].concat(fields,["note","filler"]);
+var inWeChat=/MicroMessenger/i.test(navigator.userAgent);
 var records=loadRecords();
 var editingDate=null;
+var pendingImport=null;
+var toastTimer=null;
 
 function localToday(){
   var d=new Date();
@@ -145,14 +180,22 @@ function number(id){var v=document.getElementById(id).value;return v===""?0:Numb
 function money(n){return "¥"+Number(n||0).toLocaleString("zh-CN",{minimumFractionDigits:0,maximumFractionDigits:2});}
 function fmt(n){return Number(n||0).toLocaleString("zh-CN");}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function dayLabel(date){var d=date.split("-");return Number(d[1])+"月"+Number(d[2])+"日";}
 function getMonth(){return monthPicker.value||localToday().slice(0,7);}
 function monthRecords(){
   var m=getMonth();
   return records.filter(function(r){return r.date.slice(0,7)===m;}).sort(function(a,b){return a.date.localeCompare(b.date);});
 }
+function findRecord(date){return records.find(function(r){return r.date===date;});}
 function setMessage(text,kind){message.textContent=text;message.className="check"+(kind?" "+kind:"");}
+function toast(text){
+  var box=document.getElementById("toast");
+  box.textContent=text;box.hidden=false;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){box.hidden=true;},2800);
+}
 function valuesForForm(){
-  var obj={date:dateInput.value,status:statusInput.value,note:document.getElementById("note").value.trim()};
+  var obj={date:dateInput.value,status:statusInput.value,note:document.getElementById("note").value.trim(),filler:fillerInput.value.trim()};
   fields.forEach(function(k){obj[k]=number(k);});
   return obj;
 }
@@ -175,28 +218,33 @@ function setInputsDisabled(){
   fields.forEach(function(k){document.getElementById(k).disabled=statusInput.value==="休息";});
   liveCheck();
 }
+function rememberedFiller(){try{return localStorage.getItem(FILLER_KEY)||"";}catch(e){return "";}}
 function resetForm(date){
   editingDate=null;
   form.reset();
   dateInput.value=date||localToday();
   statusInput.value="营业";
+  fillerInput.value=rememberedFiller();
   fields.forEach(function(k){document.getElementById(k).value="";});
   document.getElementById("formTitle").textContent="每日经营记录";
   document.getElementById("saveButton").textContent="保存当天记录";
   document.getElementById("saveHint").textContent="保存后自动更新汇总";
+  hideShare();
   setInputsDisabled();
 }
 function editRecord(date){
-  var x=records.find(function(r){return r.date===date;});
+  var x=findRecord(date);
   if(!x)return;
   editingDate=date;
   dateInput.value=x.date;
   statusInput.value=x.status||"营业";
   fields.forEach(function(k){document.getElementById(k).value=x[k]==null?0:x[k];});
   document.getElementById("note").value=x.note||"";
+  fillerInput.value=x.filler||"";
   document.getElementById("formTitle").textContent="修改 "+date+" 的记录";
   document.getElementById("saveButton").textContent="保存修改";
   document.getElementById("saveHint").textContent="修改后会覆盖同一天的记录";
+  hideShare();
   setInputsDisabled();
   window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -236,7 +284,7 @@ function renderRows(list){
   var body=document.getElementById("recordsBody");
   if(!list.length){body.innerHTML='<tr><td colspan="11" class="empty">这个月还没有记录。</td></tr>';return;}
   body.innerHTML=list.slice().reverse().map(function(r){
-    return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.status||"营业")+'</td><td>'+fmt(r.visits)+'</td><td>'+fmt(r.tables)+'</td><td>'+fmt(r.regular)+'</td><td>'+fmt(r.newGuests)+'</td><td>'+fmt(r.referrals)+'</td><td>'+fmt(r.banquets)+'</td><td>'+fmt(r.banquetVisits)+'</td><td>'+money(r.revenue)+'</td><td><div class="row-actions"><button class="action-link" data-edit="'+esc(r.date)+'">修改</button><button class="action-link" data-delete="'+esc(r.date)+'">删除</button></div></td></tr>';
+    return '<tr><td>'+esc(r.date)+'</td><td>'+esc(r.status||"营业")+'</td><td>'+fmt(r.visits)+'</td><td>'+fmt(r.tables)+'</td><td>'+fmt(r.regular)+'</td><td>'+fmt(r.newGuests)+'</td><td>'+fmt(r.referrals)+'</td><td>'+fmt(r.banquets)+'</td><td>'+fmt(r.banquetVisits)+'</td><td>'+money(r.revenue)+'</td><td><div class="row-actions"><button class="action-link" data-share="'+esc(r.date)+'">发日报</button><button class="action-link" data-edit="'+esc(r.date)+'">修改</button><button class="action-link" data-delete="'+esc(r.date)+'">删除</button></div></td></tr>';
   }).join("");
 }
 function saveRecord(ev){
@@ -258,66 +306,258 @@ function saveRecord(ev){
   records.push(x);
   records.sort(function(a,b){return a.date.localeCompare(b.date);});
   store();
+  if(x.filler){try{localStorage.setItem(FILLER_KEY,x.filler);}catch(e){}}
   var warnings=x.status==="营业"?calculateWarnings(x):[];
-  setMessage(warnings.length?"已保存；人数口径有待核对："+warnings.join("；")+"。":"已保存当天记录，汇总已更新。","good");
   resetForm(x.date);
   render();
+  setMessage(warnings.length?"已保存；人数口径有待核对："+warnings.join("；")+"。":"已保存当天记录，汇总已更新。",warnings.length?"warn":"good");
+  showShare(x);
 }
+
+// Share links carry records in the URL fragment, which never reaches the web server.
+function encodeRecords(list){
+  var rows=list.map(function(r){return shareKeys.map(function(k){return r[k]==null?"":r[k];});});
+  var b64=btoa(unescape(encodeURIComponent(JSON.stringify({v:1,r:rows}))));
+  return b64.replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function decodeRecords(code){
+  var b64=code.replace(/-/g,"+").replace(/_/g,"/");
+  while(b64.length%4)b64+="=";
+  var payload=JSON.parse(decodeURIComponent(escape(atob(b64))));
+  if(!payload||payload.v!==1||!Array.isArray(payload.r))throw new Error("无法识别");
+  return payload.r.map(function(row){var o={};shareKeys.forEach(function(k,i){o[k]=row[i];});return o;});
+}
+function cleanRecord(r){
+  if(!r||typeof r.date!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(r.date))return null;
+  var x={date:r.date,status:r.status==="休息"?"休息":"营业",note:String(r.note==null?"":r.note).slice(0,160),filler:String(r.filler==null?"":r.filler).slice(0,20)};
+  for(var i=0;i<fields.length;i++){
+    var raw=r[fields[i]], v=raw===""||raw==null?0:Number(raw);
+    if(!Number.isFinite(v)||v<0)return null;
+    x[fields[i]]=v;
+  }
+  return x;
+}
+function sameRecord(a,b){return JSON.stringify(cleanRecord(a))===JSON.stringify(cleanRecord(b));}
+function mergeRecords(list){
+  var result={added:0,replaced:0,same:0}, latest="";
+  list.forEach(function(r){
+    var old=findRecord(r.date);
+    if(r.date>latest)latest=r.date;
+    if(old&&sameRecord(old,r)){result.same++;return;}
+    if(old)result.replaced++;else result.added++;
+    records=records.filter(function(o){return o.date!==r.date;});
+    records.push(r);
+  });
+  records.sort(function(a,b){return a.date.localeCompare(b.date);});
+  store();
+  if(editingDate&&list.some(function(r){return r.date===editingDate;}))resetForm(localToday());
+  if(latest)monthPicker.value=latest.slice(0,7);
+  render();
+  return result;
+}
+function mergeSummary(res){
+  var parts=[];
+  if(res.added)parts.push("新增 "+res.added+" 天");
+  if(res.replaced)parts.push("更新 "+res.replaced+" 天");
+  if(res.same)parts.push(res.same+" 天和本机相同");
+  return parts.join("，")||"没有可导入的记录";
+}
+function shareLink(x){return location.href.split("#")[0]+"#r="+encodeRecords([x]);}
+function shareText(x){
+  var lines=["【民权路粤菜店 "+dayLabel(x.date)+" 经营日报】"];
+  if(x.status==="休息")lines.push("今日休息");
+  else{
+    lines.push("到店 "+fmt(x.visits)+" 人次｜"+fmt(x.tables)+" 桌｜实收 "+money(x.revenue)+(x.visits?"｜人均 "+money(x.revenue/x.visits):""));
+    lines.push("熟客 "+fmt(x.regular)+"｜新客 "+fmt(x.newGuests)+"（老客介绍 "+fmt(x.referrals)+"）｜身份未知 "+fmt(x.unknown));
+    lines.push("宴请 "+fmt(x.banquets)+" 场｜"+fmt(x.banquetTables)+" 桌｜"+fmt(x.banquetVisits)+" 人次（熟客 "+fmt(x.banquetRegular)+"）");
+  }
+  if(x.note)lines.push("备注："+x.note);
+  if(x.filler)lines.push("填写："+x.filler);
+  lines.push("点开链接汇入汇总：");
+  lines.push(shareLink(x));
+  return lines.join("\n");
+}
+function showShare(x){
+  document.getElementById("shareTitle").textContent="把 "+dayLabel(x.date)+" 的日报发到店里微信群";
+  document.getElementById("shareText").value=shareText(x);
+  document.getElementById("sharePanel").hidden=false;
+}
+function hideShare(){document.getElementById("sharePanel").hidden=true;}
+function copyText(text,onDone){
+  function legacy(){
+    var ta=document.createElement("textarea");
+    ta.value=text;ta.setAttribute("readonly","");
+    ta.style.position="fixed";ta.style.top="-1000px";ta.style.opacity="0";
+    document.body.appendChild(ta);ta.focus();ta.select();ta.setSelectionRange(0,text.length);
+    var ok=false;try{ok=document.execCommand("copy");}catch(e){ok=false;}
+    document.body.removeChild(ta);onDone(ok);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(function(){onDone(true);},legacy);
+  }else legacy();
+}
+function selectForManualCopy(box){box.hidden=false;box.focus();box.select();box.setSelectionRange(0,box.value.length);}
+
 function download(name,content,type){
   var blob=new Blob([content],{type:type});
   var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();
   setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
 }
+var tableCols=["日期","营业状态","到店人次","总桌数","熟客人次","新客人次","身份未知人次","老客介绍的新客人次","宴请场次","宴请桌数","宴请人次","宴请中的熟客人次","实收营业额（元）","填写人","备注"];
+var tableKeys=["date","status","visits","tables","regular","newGuests","unknown","referrals","banquets","banquetTables","banquetVisits","banquetRegular","revenue","filler","note"];
 function csvCell(v){var s=String(v==null?"":v);return '"'+s.replace(/"/g,'""')+'"';}
+function tsvCell(v){return String(v==null?"":v).replace(/[\t\r\n]+/g," ");}
 function exportCsv(){
-  var cols=["日期","营业状态","到店人次","总桌数","熟客人次","新客人次","身份未知人次","老客介绍的新客人次","宴请场次","宴请桌数","宴请人次","宴请中的熟客人次","实收营业额（元）","备注"];
-  var keys=["date","status","visits","tables","regular","newGuests","unknown","referrals","banquets","banquetTables","banquetVisits","banquetRegular","revenue","note"];
-  var lines=[cols.map(csvCell).join(",")].concat(monthRecords().map(function(r){return keys.map(function(k){return csvCell(r[k]);}).join(",");}));
-  download("民权路粤菜店经营记录-"+getMonth()+".csv","\ufeff"+lines.join("\r\n"),"text/csv;charset=utf-8");
+  var list=monthRecords();
+  if(!list.length){toast("这个月还没有记录");return;}
+  if(inWeChat){
+    var tsv=[tableCols.join("\t")].concat(list.map(function(r){return tableKeys.map(function(k){return tsvCell(r[k]);}).join("\t");})).join("\n");
+    copyText(tsv,function(ok){toast(ok?"本月表格已复制，可粘贴到 Excel 或 WPS":"复制没成功，请用电脑浏览器打开后导出");});
+    return;
+  }
+  var lines=[tableCols.map(csvCell).join(",")].concat(list.map(function(r){return tableKeys.map(function(k){return csvCell(r[k]);}).join(",");}));
+  download("民权路粤菜店经营记录-"+getMonth()+".csv","﻿"+lines.join("\r\n"),"text/csv;charset=utf-8");
 }
 function exportJson(){
   download("民权路粤菜店经营记录备份.json",JSON.stringify({format:"fde-minquan-v1",exportedAt:new Date().toISOString(),records:records},null,2),"application/json;charset=utf-8");
 }
-function importJson(file){
+function parseImport(text){
+  var list=[], bad=0, re=/(?:#r=|FDE备份码[:：]\s*)([A-Za-z0-9_-]+)/g, m;
+  while((m=re.exec(text))){
+    try{list=list.concat(decodeRecords(m[1]));}catch(e){bad++;}
+  }
+  if(!list.length&&!bad){
+    try{var payload=JSON.parse(text), arr=Array.isArray(payload)?payload:payload&&payload.records;if(Array.isArray(arr))list=arr;}catch(e){}
+  }
+  var clean=list.map(cleanRecord).filter(Boolean);
+  return {records:clean,bad:bad+list.length-clean.length};
+}
+function showImportResult(res){
+  var out=document.getElementById("importResult");
+  out.hidden=false;
+  if(!res.records.length){
+    out.className="check warn";
+    out.textContent=res.bad?"内容不完整，无法识别。请重新复制整条日报或完整的备份码。":"没有找到日报链接或备份码。";
+    return false;
+  }
+  var merged=mergeRecords(res.records);
+  out.className="check good";
+  out.textContent="已导入："+mergeSummary(merged)+(res.bad?"；另有 "+res.bad+" 条无法识别":"")+"。";
+  return true;
+}
+function importFile(file){
   var reader=new FileReader();
   reader.onload=function(){
-    try{
-      var payload=JSON.parse(reader.result), incoming=Array.isArray(payload)?payload:payload.records;
-      if(!Array.isArray(incoming))throw new Error("文件里没有记录列表");
-      var map={};records.forEach(function(r){map[r.date]=r;});
-      incoming.forEach(function(r){if(r&&/^\d{4}-\d{2}-\d{2}$/.test(r.date))map[r.date]=r;});
-      records=Object.keys(map).sort().map(function(k){return map[k];});
-      store();render();alert("备份已导入；同日期记录按备份文件覆盖。");
-    }catch(e){alert("导入失败，请选择本工作台导出的 JSON 备份文件。");}
+    showImportResult(parseImport(String(reader.result)));
     document.getElementById("importFile").value="";
   };
   reader.readAsText(file,"utf-8");
+}
+
+function clearHash(){
+  if(history.replaceState)history.replaceState(null,"",location.href.split("#")[0]);
+  else location.hash="";
+}
+function checkIncoming(){
+  var m=location.hash.match(/^#r=([A-Za-z0-9_-]+)$/);
+  if(!m)return;
+  var box=document.getElementById("incoming"), text=document.getElementById("incomingText");
+  var accept=document.getElementById("incomingAccept"), dismiss=document.getElementById("incomingDismiss");
+  box.hidden=false;accept.hidden=false;dismiss.textContent="不汇入";
+  try{pendingImport=decodeRecords(m[1]).map(cleanRecord).filter(Boolean);}catch(e){pendingImport=null;}
+  if(!pendingImport||!pendingImport.length){
+    pendingImport=null;accept.hidden=true;dismiss.textContent="知道了";
+    text.textContent="这个链接里的日报无法识别，可能复制不完整。请让同事重新发一次。";
+    return;
+  }
+  var lines=pendingImport.map(function(x){
+    var old=findRecord(x.date);
+    var desc=dayLabel(x.date)+"："+(x.status==="休息"?"休息":fmt(x.visits)+" 人次，实收 "+money(x.revenue))+(x.filler?"（"+x.filler+" 填写）":"");
+    if(old&&sameRecord(old,x))desc+="。本机已有相同记录";
+    else if(old)desc+="。本机已有这天的记录，汇入后以这条为准";
+    return esc(desc);
+  });
+  text.innerHTML="<strong>收到店里的日报</strong><br>"+lines.join("<br>");
 }
 
 form.addEventListener("submit",saveRecord);
 fields.forEach(function(k){document.getElementById(k).addEventListener("input",liveCheck);});
 statusInput.addEventListener("change",setInputsDisabled);
 dateInput.addEventListener("change",function(){
-  var found=records.find(function(r){return r.date===dateInput.value;});
+  var found=findRecord(dateInput.value);
   if(found)editRecord(found.date);else resetForm(dateInput.value);
 });
 monthPicker.addEventListener("change",render);
 document.getElementById("newButton").addEventListener("click",function(){resetForm(localToday());});
 document.getElementById("recordsBody").addEventListener("click",function(ev){
-  var edit=ev.target.getAttribute("data-edit"), del=ev.target.getAttribute("data-delete");
+  var share=ev.target.getAttribute("data-share"), edit=ev.target.getAttribute("data-edit"), del=ev.target.getAttribute("data-delete");
+  if(share){
+    var x=findRecord(share);
+    if(x){showShare(x);document.getElementById("sharePanel").scrollIntoView({behavior:"smooth",block:"center"});}
+  }
   if(edit)editRecord(edit);
   if(del&&confirm("删除 "+del+" 的记录？")){
     records=records.filter(function(r){return r.date!==del;});store();render();
     if(editingDate===del)resetForm(localToday());
   }
 });
+document.getElementById("copyShare").addEventListener("click",function(){
+  var box=document.getElementById("shareText");
+  copyText(box.value,function(ok){
+    if(ok)toast("已复制，到微信群长按粘贴发送");
+    else{selectForManualCopy(box);toast("复制没成功，请长按上面的文字手动复制");}
+  });
+});
+document.getElementById("closeShare").addEventListener("click",hideShare);
 document.getElementById("exportCsv").addEventListener("click",exportCsv);
-document.getElementById("exportJson").addEventListener("click",exportJson);
+document.getElementById("openBackup").addEventListener("click",function(){
+  document.getElementById("importResult").hidden=true;
+  document.getElementById("backupText").hidden=true;
+  document.getElementById("backupPanel").hidden=false;
+});
+document.getElementById("closeBackup").addEventListener("click",function(){document.getElementById("backupPanel").hidden=true;});
+document.getElementById("backupPanel").addEventListener("click",function(ev){if(ev.target===this)this.hidden=true;});
+document.getElementById("copyBackup").addEventListener("click",function(){
+  var list=records.map(cleanRecord).filter(Boolean);
+  if(!list.length){toast("这台手机还没有记录");return;}
+  var code="FDE备份码："+encodeRecords(list), box=document.getElementById("backupText");
+  box.value=code;box.hidden=true;
+  copyText(code,function(ok){
+    if(ok)toast("备份码已复制，发到文件传输助手保存");
+    else{selectForManualCopy(box);toast("复制没成功，请长按下面的备份码手动复制");}
+  });
+});
+document.getElementById("downloadBackup").addEventListener("click",exportJson);
+document.getElementById("importPasted").addEventListener("click",function(){
+  var box=document.getElementById("importText");
+  if(showImportResult(parseImport(box.value)))box.value="";
+});
 document.getElementById("importButton").addEventListener("click",function(){document.getElementById("importFile").click();});
-document.getElementById("importFile").addEventListener("change",function(ev){if(ev.target.files&&ev.target.files[0])importJson(ev.target.files[0]);});
+document.getElementById("importFile").addEventListener("change",function(ev){if(ev.target.files&&ev.target.files[0])importFile(ev.target.files[0]);});
+document.getElementById("incomingAccept").addEventListener("click",function(){
+  if(!pendingImport)return;
+  var merged=mergeRecords(pendingImport);
+  pendingImport=null;
+  document.getElementById("incomingText").textContent="已汇入："+mergeSummary(merged)+"。下面的汇总已经更新。";
+  document.getElementById("incomingAccept").hidden=true;
+  document.getElementById("incomingDismiss").textContent="知道了";
+  clearHash();
+});
+document.getElementById("incomingDismiss").addEventListener("click",function(){
+  document.getElementById("incoming").hidden=true;
+  pendingImport=null;
+  clearHash();
+});
+window.addEventListener("hashchange",checkIncoming);
+
+if(inWeChat){
+  document.getElementById("exportCsv").textContent="复制本月表格";
+  document.getElementById("downloadBackup").hidden=true;
+}
 monthPicker.value=localToday().slice(0,7);
 resetForm(localToday());
 render();
+checkIncoming();
 })();
 </script>
 </body>
