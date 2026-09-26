@@ -28,11 +28,14 @@ input:focus,select:focus{outline:3px solid #176b5024;border-color:var(--green)}
 .file-input{display:none}.action-link{border:0;background:none;color:var(--green);padding:3px 5px;font-size:11px;font-weight:700}.row-actions{display:flex;gap:4px}
 footer{text-align:center;color:#96a19b;font-size:11px;padding:20px 0 0}
 textarea{width:100%;border:1px solid #d9e1dc;border-radius:9px;padding:10px 11px;font-size:13px;line-height:1.55;color:var(--ink);background:#fff;resize:vertical}
-.incoming{background:#fff5df;border:1px solid #f0d9a8;border-radius:13px;padding:14px 16px;margin-bottom:17px;font-size:13px;line-height:1.6}
+.incoming{background:#fff5df;border:1px solid #f0d9a8;border-radius:13px;padding:14px 16px;margin:16px 0 17px;font-size:13px;line-height:1.6}
 .share{margin-top:14px;border:1px solid #cfe5d8;background:#f3faf6;border-radius:12px;padding:14px}.share-head{margin-bottom:9px}.share-head span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(20,32,28,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:12px}.sheet{background:#fff;border-radius:16px;padding:18px;max-width:560px;width:100%;max-height:90vh;overflow:auto}.small{font-size:12px;color:var(--muted);margin:0 0 9px;line-height:1.6}
+.guide{padding:0;margin-bottom:17px}.guide summary{cursor:pointer;list-style:none;padding:15px 20px;font-weight:750;color:var(--green);display:flex;justify-content:space-between;align-items:center;gap:10px}.guide summary::-webkit-details-marker{display:none}.guide summary::after{content:"展开";font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap}.guide[open] summary::after{content:"收起"}
+.guide-body{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:0 20px 18px;font-size:13px;line-height:1.65}.guide-body ol,.guide-body ul{margin:6px 0 0;padding-left:18px}.guide-body li{margin-bottom:4px}
+.structure{display:grid;gap:7px}.srow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:9px}.srow b{text-align:right;white-space:nowrap}.srow span{color:var(--muted);white-space:nowrap}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#173f35;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:30;max-width:90%;text-align:center;box-shadow:var(--shadow)}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.guide-body{grid-template-columns:1fr;gap:10px}.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.shell{padding:13px 12px 32px}header{padding:16px;border-radius:14px}.badge{font-size:10px}.brand strong{font-size:14px}.brand small{font-size:11px}h1{font-size:23px;margin-top:22px}.metrics{gap:8px}.metric{padding:12px}.metric .value{font-size:21px}.fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.wide{grid-column:span 2}.card{padding:15px}.toolbar .btn{flex:1}.toolbar label{width:100%}.toolbar input{width:100%}}
 </style>
 </head>
@@ -47,12 +50,49 @@ textarea{width:100%;border:1px solid #d9e1dc;border-radius:9px;padding:10px 11px
     <div id="incomingText"></div>
     <div class="form-actions"><button class="btn primary" type="button" id="incomingAccept">汇入本机汇总</button><button class="btn" type="button" id="incomingDismiss">不汇入</button></div>
   </div>
+  <div id="reminder" class="incoming" hidden>
+    <div id="reminderText"></div>
+    <div class="form-actions"><button class="btn primary" type="button" id="reminderFill">现在补记</button></div>
+  </div>
   <h1>今天的经营数据，收档时填一次</h1>
   <p class="lead">一行记一天，不用逐桌登记；保存后把日报发到店里微信群，老板点开链接就汇总。</p>
+  <details class="card guide" id="guide">
+    <summary>使用说明（第一次用先看这里）</summary>
+    <div class="guide-body">
+      <div>
+        <strong>店员：每天收档填一次</strong>
+        <ol>
+          <li>日期默认是当天（凌晨 5 点前是前一天），先选“营业”或“休息”。</li>
+          <li>填人次、桌数和实收营业额；没有的项填 0，分不清熟客还是新客的计入“身份未知”。</li>
+          <li>点“保存当天记录”，再点“复制日报”，到店里微信群长按粘贴发送。</li>
+          <li>填错了：在“本月每日记录”里点“修改”，改好保存后再发一次日报。</li>
+        </ol>
+      </div>
+      <div>
+        <strong>老板：在群里点链接就汇总</strong>
+        <ol>
+          <li>点开群里日报最后的链接，在页面顶部点“汇入本机汇总”。</li>
+          <li>点链接没反应：长按日报复制，点“备份 / 导入”，粘贴后点“导入粘贴内容”。</li>
+          <li>看月汇总、客群结构和每周汇总；“录入提醒”会列出还没记录的日期。</li>
+          <li>点“复制月汇总”，可以把整月数据发给顾问或合伙人。</li>
+        </ol>
+      </div>
+      <div>
+        <strong>注意</strong>
+        <ul>
+          <li>数据存在这台手机打开页面的浏览器里。每次都从微信里点同一个链接打开（可设为星标或浮窗）；换成手机自带浏览器打开，会看不到之前的数据。</li>
+          <li>清理微信缓存或换手机前，先点“备份 / 导入”里的“复制备份码”，发到文件传输助手保存。</li>
+          <li>同一天只记一条。两个人都填了，汇入前页面会提示，以最后汇入的为准。</li>
+          <li>建议负责填写的人在手机上设一个每天收档时间的闹钟（例如 22:30“填经营日报”）；漏记的日子，页面顶部也会提醒补上。</li>
+        </ul>
+      </div>
+    </div>
+  </details>
   <div class="toolbar">
     <label for="monthPicker">查看月份</label>
     <input id="monthPicker" type="month">
-    <button class="btn subtle" id="exportCsv">导出本月表格</button>
+    <button class="btn subtle" id="copyMonth">复制月汇总</button>
+    <button class="btn" id="exportCsv">导出表格</button>
     <button class="btn" id="openBackup">备份 / 导入</button>
   </div>
 
@@ -104,6 +144,10 @@ textarea{width:100%;border:1px solid #d9e1dc;border-radius:9px;padding:10px 11px
 
     <aside>
       <section class="card">
+        <div class="cardhead"><div><h2>本月客群结构</h2><p>按营业日人次计算。熟客、新客、身份未知三项之和应等于到店人次；宴请可与它们重叠。</p></div></div>
+        <div id="structure" class="structure"></div>
+      </section>
+      <section class="card">
         <div class="cardhead"><div><h2>本月每周汇总</h2><p>按周一到周日统计；首尾周可能不完整。</p></div></div>
         <div id="weeklySummary" class="week-list"></div>
       </section>
@@ -138,6 +182,9 @@ textarea{width:100%;border:1px solid #d9e1dc;border-radius:9px;padding:10px 11px
     <textarea id="importText" rows="6" placeholder="在这里长按粘贴"></textarea>
     <div class="form-actions"><button class="btn primary" type="button" id="importPasted">导入粘贴内容</button><button class="btn" type="button" id="importButton">选择备份文件</button></div>
     <input class="file-input" id="importFile" type="file" accept=".json,application/json">
+    <div class="section-title">清空</div>
+    <p class="small">试用结束、正式开始记录前，可以清空这台手机上的全部记录。只影响这台手机，不影响老板或同事手机上的数据。</p>
+    <div class="form-actions"><button class="btn danger" type="button" id="clearAll">清空这台手机的全部记录</button></div>
     <div id="importResult" class="check" hidden></div>
   </div>
 </div>
@@ -148,6 +195,7 @@ textarea{width:100%;border:1px solid #d9e1dc;border-radius:9px;padding:10px 11px
 "use strict";
 var KEY="fde-minquan-restaurant-v1";
 var FILLER_KEY="fde-minquan-filler";
+var GUIDE_KEY="fde-minquan-guide-seen";
 var form=document.getElementById("entryForm");
 var monthPicker=document.getElementById("monthPicker");
 var dateInput=document.getElementById("date");
@@ -264,27 +312,112 @@ function render(){
   document.getElementById("mRevenue").textContent=money(revenue);
   document.getElementById("mAverage").textContent=visits?money(revenue/visits):"—";
   document.getElementById("recordCount").textContent=list.length+" 条";
-  document.getElementById("monthProgress").textContent=list.length
-    ?"本月已记录 "+list.length+" 天，其中营业 "+open.length+" 天。未录入的日期不会被当成休息日。"
+  var missing=missingDates(list);
+  var progress=list.length
+    ?"本月已记录 "+list.length+" 天，其中营业 "+open.length+" 天。"
     :"本月还没有记录。先选日期，填当天汇总后保存。";
-  renderWeeks(list);
+  if(missing.length)progress+="还没记录："+formatDates(missing)+"。休息日也请记一条“休息”。";
+  else if(list.length)progress+="到昨天为止每天都有记录。";
+  document.getElementById("monthProgress").textContent=progress;
+  renderStructure(open);
+  renderWeeks(weeksOf(list));
   renderRows(list);
+  renderReminder();
 }
-function renderWeeks(list){
-  var box=document.getElementById("weeklySummary");
+function pct(n,d){return d?(Math.round(n/d*1000)/10)+"%":"—";}
+function mix(open){
+  var t={};
+  ["visits","tables","revenue","regular","newGuests","unknown","referrals","banquets","banquetTables","banquetVisits"].forEach(function(k){t[k]=sum(open,k);});
+  return t;
+}
+function renderStructure(open){
+  var box=document.getElementById("structure"), t=mix(open);
+  if(!t.visits){box.innerHTML='<div class="empty">本月还没有营业数据</div>';return;}
+  var rows=[
+    ["熟客",fmt(t.regular)+" 人次",pct(t.regular,t.visits)],
+    ["新客",fmt(t.newGuests)+" 人次",pct(t.newGuests,t.visits)],
+    ["其中老客介绍",fmt(t.referrals)+" 人次","占新客 "+pct(t.referrals,t.newGuests)],
+    ["身份未知",fmt(t.unknown)+" 人次",pct(t.unknown,t.visits)],
+    ["商务宴请",fmt(t.banquets)+" 场 · "+fmt(t.banquetTables)+" 桌 · "+fmt(t.banquetVisits)+" 人次","占到店 "+pct(t.banquetVisits,t.visits)],
+    ["桌均消费",t.tables?money(t.revenue/t.tables):"—","共 "+fmt(t.tables)+" 桌"]
+  ];
+  box.innerHTML=rows.map(function(r){return '<div class="srow"><span>'+esc(r[0])+'</span><b>'+esc(r[1])+'</b><span>'+esc(r[2])+'</span></div>';}).join("");
+}
+// Missing = days from this phone's first record up to yesterday; today is filled at closing.
+function missingDates(list){
+  if(!records.length)return [];
+  var month=getMonth(), m=month.split("-").map(Number), days=new Date(m[0],m[1],0).getDate();
+  var start=records.reduce(function(a,r){return r.date<a?r.date:a;},records[0].date), end=businessDay(), have={}, out=[];
+  list.forEach(function(r){have[r.date]=true;});
+  for(var d=1;d<=days;d++){
+    var key=month+"-"+String(d).padStart(2,"0");
+    if(key>=end)break;
+    if(key>=start&&!have[key])out.push(key);
+  }
+  return out;
+}
+// Last 7 days up to yesterday with no record, starting from this phone's first record.
+function recentMissing(){
+  if(!records.length)return [];
+  var first=records.reduce(function(a,r){return r.date<a?r.date:a;},records[0].date), today=businessDay().split("-").map(Number), out=[];
+  for(var back=7;back>=1;back--){
+    var key=ymd(new Date(today[0],today[1]-1,today[2]-back));
+    if(key>=first&&!findRecord(key))out.push(key);
+  }
+  return out;
+}
+function renderReminder(){
+  var missing=recentMissing(), box=document.getElementById("reminder");
+  box.hidden=!missing.length;
+  if(!missing.length)return;
+  var latest=missing[missing.length-1];
+  document.getElementById("reminderText").innerHTML="<strong>最近还有 "+missing.length+" 天没记录</strong><br>"+esc(missing.map(dayLabel).join("、"))+"。休息日也请记一条“休息”。";
+  var btn=document.getElementById("reminderFill");
+  btn.textContent="补记 "+dayLabel(latest);
+  btn.setAttribute("data-date",latest);
+}
+function formatDates(dates){
+  var shown=dates.slice(0,8).map(dayLabel).join("、");
+  return dates.length>8?shown+" 等 "+dates.length+" 天":shown+"（共 "+dates.length+" 天）";
+}
+function weeksOf(list){
   var m=getMonth().split("-").map(Number), first=new Date(m[0],m[1]-1,1), last=new Date(m[0],m[1],0);
-  var monday=new Date(first);var offset=(monday.getDay()+6)%7;monday.setDate(monday.getDate()-offset);
-  var html="";
+  var monday=new Date(first);monday.setDate(monday.getDate()-(monday.getDay()+6)%7);
+  var weeks=[];
   while(monday<=last){
     var start=new Date(monday), end=new Date(monday);end.setDate(end.getDate()+6);
-    var keyStart=start.getFullYear()+"-"+String(start.getMonth()+1).padStart(2,"0")+"-"+String(start.getDate()).padStart(2,"0");
-    var keyEnd=end.getFullYear()+"-"+String(end.getMonth()+1).padStart(2,"0")+"-"+String(end.getDate()).padStart(2,"0");
+    var keyStart=ymd(start), keyEnd=ymd(end);
     var bucket=list.filter(function(r){return r.date>=keyStart&&r.date<=keyEnd&&r.status==="营业";});
-    var label=String(start.getMonth()+1).padStart(2,"0")+"."+String(start.getDate()).padStart(2,"0")+" — "+String(end.getMonth()+1).padStart(2,"0")+"."+String(end.getDate()).padStart(2,"0");
-    html+='<div class="week"><div><strong>'+label+'</strong><br><span>'+bucket.length+' 个营业日 · '+fmt(sum(bucket,"visits"))+' 人次</span></div><b>'+money(sum(bucket,"revenue"))+'</b></div>';
+    weeks.push({
+      label:String(start.getMonth()+1).padStart(2,"0")+"."+String(start.getDate()).padStart(2,"0")+" — "+String(end.getMonth()+1).padStart(2,"0")+"."+String(end.getDate()).padStart(2,"0"),
+      days:bucket.length,visits:sum(bucket,"visits"),revenue:sum(bucket,"revenue")
+    });
     monday.setDate(monday.getDate()+7);
   }
-  box.innerHTML=html||'<div class="empty">选择月份后显示周汇总</div>';
+  return weeks;
+}
+function renderWeeks(weeks){
+  document.getElementById("weeklySummary").innerHTML=weeks.map(function(w){
+    return '<div class="week"><div><strong>'+w.label+'</strong><br><span>'+w.days+' 个营业日 · '+fmt(w.visits)+' 人次</span></div><b>'+money(w.revenue)+'</b></div>';
+  }).join("")||'<div class="empty">选择月份后显示周汇总</div>';
+}
+function monthSummaryText(){
+  var list=monthRecords(), open=list.filter(function(r){return r.status==="营业";}), t=mix(open), m=getMonth().split("-");
+  var lines=["【民权路粤菜店 "+m[0]+"年"+Number(m[1])+"月 经营汇总】"];
+  lines.push("营业 "+open.length+" 天｜到店 "+fmt(t.visits)+" 人次｜实收 "+money(t.revenue)+(t.visits?"｜人均 "+money(t.revenue/t.visits):"")+(t.tables?"｜桌均 "+money(t.revenue/t.tables):""));
+  if(t.visits){
+    lines.push("熟客 "+pct(t.regular,t.visits)+"｜新客 "+pct(t.newGuests,t.visits)+"（老客介绍占新客 "+pct(t.referrals,t.newGuests)+"）｜身份未知 "+pct(t.unknown,t.visits));
+    lines.push("宴请 "+fmt(t.banquets)+" 场｜"+fmt(t.banquetTables)+" 桌｜"+fmt(t.banquetVisits)+" 人次（占到店 "+pct(t.banquetVisits,t.visits)+"）");
+  }
+  var weeks=weeksOf(list).filter(function(w){return w.days;});
+  if(weeks.length){
+    lines.push("每周：");
+    weeks.forEach(function(w){lines.push(w.label+"　"+w.days+" 天 · "+fmt(w.visits)+" 人次 · "+money(w.revenue));});
+  }
+  var missing=missingDates(list);
+  if(missing.length)lines.push("还没记录："+formatDates(missing));
+  lines.push("共 "+list.length+" 条记录，截至 "+dayLabel(businessDay()));
+  return lines.join("\n");
 }
 function renderRows(list){
   var body=document.getElementById("recordsBody");
@@ -584,14 +717,35 @@ document.getElementById("incomingDismiss").addEventListener("click",function(){
   clearHash();
 });
 window.addEventListener("hashchange",checkIncoming);
+document.getElementById("copyMonth").addEventListener("click",function(){
+  if(!monthRecords().length){toast("这个月还没有记录");return;}
+  copyText(monthSummaryText(),function(ok){toast(ok?"本月汇总已复制，可以直接发微信":"复制没成功，请稍后再试");});
+});
+document.getElementById("clearAll").addEventListener("click",function(){
+  if(!records.length){toast("这台手机没有记录");return;}
+  if(!confirm("要清空这台手机上的全部 "+records.length+" 条记录吗？清空前建议先点上面的“复制备份码”保存一份。"))return;
+  if(!confirm("再确认一次：清空后只能用备份码恢复。确定清空？"))return;
+  records=[];persist();resetForm(businessDay());render();
+  var out=document.getElementById("importResult");
+  out.hidden=false;out.className="check good";out.textContent="已清空这台手机的全部记录。";
+});
+document.getElementById("reminderFill").addEventListener("click",function(){
+  var date=this.getAttribute("data-date");
+  if(!date||!confirmDiscard())return;
+  if(findRecord(date))editRecord(date);else{resetForm(date);window.scrollTo({top:document.getElementById("entryForm").getBoundingClientRect().top+window.pageYOffset-80,behavior:"smooth"});}
+  toast("日期已改为 "+dayLabel(date)+"，填好后保存");
+});
+var guide=document.getElementById("guide");
+guide.addEventListener("toggle",function(){if(!guide.open){try{localStorage.setItem(GUIDE_KEY,"1");}catch(e){}}});
 
 if(inWeChat){
-  document.getElementById("exportCsv").textContent="复制本月表格";
+  document.getElementById("exportCsv").textContent="复制表格";
   document.getElementById("downloadBackup").hidden=true;
 }
 monthPicker.value=businessDay().slice(0,7);
 resetForm(businessDay());
 render();
+try{if(!records.length&&!localStorage.getItem(GUIDE_KEY)&&!/^#r=/.test(location.hash))guide.open=true;}catch(e){}
 checkIncoming();
 })();
 </script>
