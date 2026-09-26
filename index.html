@@ -508,7 +508,8 @@ function mergeSummary(res){
   if(res.same)parts.push(res.same+" 天和本机相同");
   return parts.join("，")||"没有可导入的记录";
 }
-function shareLink(x){return location.href.split("#")[0]+"#r="+encodeRecords([x]);}
+// Drop query strings (WeChat adds its own) so shared links stay short and canonical.
+function shareLink(x){return location.origin+location.pathname+"#r="+encodeRecords([x]);}
 function shareText(x){
   var lines=["【民权路粤菜店 "+dayLabel(x.date)+" 经营日报】"];
   if(x.status==="休息")lines.push("今日休息");
