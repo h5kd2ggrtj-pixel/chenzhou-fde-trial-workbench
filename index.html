@@ -226,6 +226,8 @@ function loadRecords(){
   }catch(e){return [];}
 }
 function store(){try{localStorage.setItem(KEY,JSON.stringify(records));return true;}catch(e){return false;}}
+// WeChat can keep several copies of this page alive; re-read before every write so an older copy never overwrites newer data.
+function refresh(){records=loadRecords();}
 function persist(){if(!store())toast("没能存进这台手机，请先复制日报或备份码，免得丢失");}
 function confirmDiscard(){return !dirty||confirm("正在填的内容还没保存，确定放弃吗？");}
 function number(id){var v=document.getElementById(id).value;return v===""?0:Number(v);}
@@ -438,6 +440,7 @@ function saveRecord(ev){
   }else{
     fields.forEach(function(k){x[k]=0;});
   }
+  refresh();
   var existing=findRecord(x.date);
   if(existing&&editingDate!==x.date){
     var summary=existing.status==="休息"?"休息":fmt(existing.visits)+" 人次，"+money(existing.revenue);
@@ -485,6 +488,7 @@ function cleanRecord(r){
 }
 function sameRecord(a,b){return JSON.stringify(cleanRecord(a))===JSON.stringify(cleanRecord(b));}
 function mergeRecords(list){
+  refresh();
   var result={added:0,replaced:0,same:0}, latest="";
   list.forEach(function(r){
     var old=findRecord(r.date);
@@ -556,6 +560,7 @@ var tableKeys=["date","status","visits","tables","regular","newGuests","unknown"
 function csvCell(v){var s=String(v==null?"":v);return '"'+s.replace(/"/g,'""')+'"';}
 function tsvCell(v){return String(v==null?"":v).replace(/[\t\r\n]+/g," ");}
 function exportCsv(){
+  refresh();
   var list=monthRecords();
   if(!list.length){toast("这个月还没有记录");return;}
   if(inWeChat){
@@ -607,8 +612,9 @@ function clearHash(){
   else location.hash="";
 }
 function checkIncoming(){
-  var m=location.hash.match(/^#r=([A-Za-z0-9_-]+)$/);
+  var m=location.hash.match(/^#r=([A-Za-z0-9_-]+)/);
   if(!m)return;
+  refresh();
   var box=document.getElementById("incoming"), text=document.getElementById("incomingText");
   var accept=document.getElementById("incomingAccept"), dismiss=document.getElementById("incomingDismiss");
   box.hidden=false;accept.hidden=false;dismiss.textContent="不汇入";
@@ -670,6 +676,7 @@ document.getElementById("recordsBody").addEventListener("click",function(ev){
   }
   if(edit&&(edit===editingDate||confirmDiscard()))editRecord(edit);
   if(del&&confirm("删除 "+del+" 的记录？")){
+    refresh();
     records=records.filter(function(r){return r.date!==del;});persist();render();
     if(shareDate===del)hideShare();
     if(editingDate===del)resetForm(businessDay());
@@ -692,6 +699,7 @@ document.getElementById("openBackup").addEventListener("click",function(){
 document.getElementById("closeBackup").addEventListener("click",function(){document.getElementById("backupPanel").hidden=true;});
 document.getElementById("backupPanel").addEventListener("click",function(ev){if(ev.target===this)this.hidden=true;});
 document.getElementById("copyBackup").addEventListener("click",function(){
+  refresh();
   var list=records.map(cleanRecord).filter(Boolean);
   if(!list.length){toast("这台手机还没有记录");return;}
   var code="FDE备份码："+encodeRecords(list), box=document.getElementById("backupText");
@@ -723,11 +731,15 @@ document.getElementById("incomingDismiss").addEventListener("click",function(){
   clearHash();
 });
 window.addEventListener("hashchange",checkIncoming);
+window.addEventListener("storage",function(ev){if(ev.key===KEY){refresh();render();}});
+document.addEventListener("visibilitychange",function(){if(!document.hidden){refresh();render();}});
 document.getElementById("copyMonth").addEventListener("click",function(){
+  refresh();
   if(!monthRecords().length){toast("这个月还没有记录");return;}
   copyText(monthSummaryText(),function(ok){toast(ok?"本月汇总已复制，可以直接发微信":"复制没成功，请稍后再试");});
 });
 document.getElementById("clearAll").addEventListener("click",function(){
+  refresh();
   if(!records.length){toast("这台手机没有记录");return;}
   if(!confirm("要清空这台手机上的全部 "+records.length+" 条记录吗？清空前建议先点上面的“复制备份码”保存一份。"))return;
   if(!confirm("再确认一次：清空后只能用备份码恢复。确定清空？"))return;
