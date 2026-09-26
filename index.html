@@ -68,7 +68,7 @@ textarea{width:100%;border:1px solid #d9e1dc;border-radius:9px;padding:10px 11px
       <div class="cardhead"><div><h2 id="formTitle">每日经营记录</h2><p>只填汇总数字；没有该项业务时填 0。</p></div><span class="pill">店员每日 1 次</span></div>
       <form id="entryForm">
         <div class="fields">
-          <div class="field"><label for="date">记录日期</label><input id="date" name="date" type="date" required></div>
+          <div class="field"><label for="date">记录日期</label><input id="date" name="date" type="date" required><div class="hint">凌晨 5 点前默认记前一天。</div></div>
           <div class="field"><label for="status">营业状态</label><select id="status" name="status"><option value="营业">营业</option><option value="休息">休息</option></select></div>
           <div class="field"><label for="filler">填写人（选填）</label><input id="filler" name="filler" type="text" maxlength="20" placeholder="例如：小王"></div>
 
@@ -162,11 +162,13 @@ var records=loadRecords();
 var editingDate=null;
 var pendingImport=null;
 var toastTimer=null;
+var dirty=false;
+var lastDate="";
+var shareDate=null;
 
-function localToday(){
-  var d=new Date();
-  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-}
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+// Closing often runs past midnight, so before 05:00 default to the previous business day.
+function businessDay(){var d=new Date();if(d.getHours()<5)d.setDate(d.getDate()-1);return ymd(d);}
 function loadRecords(){
   try{
     var raw=localStorage.getItem(KEY);
@@ -175,13 +177,15 @@ function loadRecords(){
     return Array.isArray(parsed)?parsed.filter(function(x){return x&&typeof x.date==="string";}):[];
   }catch(e){return [];}
 }
-function store(){localStorage.setItem(KEY,JSON.stringify(records));}
+function store(){try{localStorage.setItem(KEY,JSON.stringify(records));return true;}catch(e){return false;}}
+function persist(){if(!store())toast("没能存进这台手机，请先复制日报或备份码，免得丢失");}
+function confirmDiscard(){return !dirty||confirm("正在填的内容还没保存，确定放弃吗？");}
 function number(id){var v=document.getElementById(id).value;return v===""?0:Number(v);}
 function money(n){return "¥"+Number(n||0).toLocaleString("zh-CN",{minimumFractionDigits:0,maximumFractionDigits:2});}
 function fmt(n){return Number(n||0).toLocaleString("zh-CN");}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function dayLabel(date){var d=date.split("-");return Number(d[1])+"月"+Number(d[2])+"日";}
-function getMonth(){return monthPicker.value||localToday().slice(0,7);}
+function getMonth(){return monthPicker.value||businessDay().slice(0,7);}
 function monthRecords(){
   var m=getMonth();
   return records.filter(function(r){return r.date.slice(0,7)===m;}).sort(function(a,b){return a.date.localeCompare(b.date);});
@@ -222,7 +226,7 @@ function rememberedFiller(){try{return localStorage.getItem(FILLER_KEY)||"";}cat
 function resetForm(date){
   editingDate=null;
   form.reset();
-  dateInput.value=date||localToday();
+  dateInput.value=date||businessDay();
   statusInput.value="营业";
   fillerInput.value=rememberedFiller();
   fields.forEach(function(k){document.getElementById(k).value="";});
@@ -231,6 +235,7 @@ function resetForm(date){
   document.getElementById("saveHint").textContent="保存后自动更新汇总";
   hideShare();
   setInputsDisabled();
+  dirty=false;lastDate=dateInput.value;
 }
 function editRecord(date){
   var x=findRecord(date);
@@ -246,6 +251,7 @@ function editRecord(date){
   document.getElementById("saveHint").textContent="修改后会覆盖同一天的记录";
   hideShare();
   setInputsDisabled();
+  dirty=false;lastDate=dateInput.value;
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function sum(list,key){return list.reduce(function(t,r){return t+Number(r[key]||0);},0);}
@@ -299,18 +305,25 @@ function saveRecord(ev){
   }else{
     fields.forEach(function(k){x[k]=0;});
   }
+  var existing=findRecord(x.date);
+  if(existing&&editingDate!==x.date){
+    var summary=existing.status==="休息"?"休息":fmt(existing.visits)+" 人次，"+money(existing.revenue);
+    if(!confirm(dayLabel(x.date)+" 已经有记录（"+summary+"）。要用这次填写的内容覆盖吗？"))return;
+  }
   if(editingDate&&editingDate!==x.date){
     records=records.filter(function(r){return r.date!==editingDate;});
   }
   records=records.filter(function(r){return r.date!==x.date;});
   records.push(x);
   records.sort(function(a,b){return a.date.localeCompare(b.date);});
-  store();
+  var saved=store();
   if(x.filler){try{localStorage.setItem(FILLER_KEY,x.filler);}catch(e){}}
   var warnings=x.status==="营业"?calculateWarnings(x):[];
+  monthPicker.value=x.date.slice(0,7);
   resetForm(x.date);
   render();
-  setMessage(warnings.length?"已保存；人数口径有待核对："+warnings.join("；")+"。":"已保存当天记录，汇总已更新。",warnings.length?"warn":"good");
+  if(!saved)setMessage("这条记录没能存进手机（浏览器不允许保存数据），刷新后会丢失。请马上点“复制日报”发到群里留底。","warn");
+  else setMessage(warnings.length?"已保存；人数口径有待核对："+warnings.join("；")+"。":"已保存当天记录，汇总已更新。",warnings.length?"warn":"good");
   showShare(x);
 }
 
@@ -349,8 +362,8 @@ function mergeRecords(list){
     records.push(r);
   });
   records.sort(function(a,b){return a.date.localeCompare(b.date);});
-  store();
-  if(editingDate&&list.some(function(r){return r.date===editingDate;}))resetForm(localToday());
+  persist();
+  if(editingDate&&list.some(function(r){return r.date===editingDate;}))resetForm(businessDay());
   if(latest)monthPicker.value=latest.slice(0,7);
   render();
   return result;
@@ -381,8 +394,9 @@ function showShare(x){
   document.getElementById("shareTitle").textContent="把 "+dayLabel(x.date)+" 的日报发到店里微信群";
   document.getElementById("shareText").value=shareText(x);
   document.getElementById("sharePanel").hidden=false;
+  shareDate=x.date;
 }
-function hideShare(){document.getElementById("sharePanel").hidden=true;}
+function hideShare(){document.getElementById("sharePanel").hidden=true;shareDate=null;}
 function copyText(text,onDone){
   function legacy(){
     var ta=document.createElement("textarea");
@@ -481,24 +495,45 @@ function checkIncoming(){
 }
 
 form.addEventListener("submit",saveRecord);
+function markDirty(ev){if(ev.target!==dateInput)dirty=true;}
+form.addEventListener("input",markDirty);
+form.addEventListener("change",markDirty);
 fields.forEach(function(k){document.getElementById(k).addEventListener("input",liveCheck);});
 statusInput.addEventListener("change",setInputsDisabled);
+// Changing the date keeps what was typed; only a date that already has a record opens that record.
 dateInput.addEventListener("change",function(){
-  var found=findRecord(dateInput.value);
-  if(found)editRecord(found.date);else resetForm(dateInput.value);
+  var target=dateInput.value;
+  if(!target){dateInput.value=lastDate;return;}
+  if(target===lastDate)return;
+  if(findRecord(target)&&target!==editingDate){
+    if(!confirmDiscard()){dateInput.value=lastDate;return;}
+    editRecord(target);
+    toast(dayLabel(target)+"已经有记录，已打开修改");
+    return;
+  }
+  var title=document.getElementById("formTitle");
+  if(editingDate&&target!==editingDate){title.textContent="修改 "+editingDate+" 的记录，日期改为 "+target;dirty=true;}
+  else if(editingDate)title.textContent="修改 "+editingDate+" 的记录";
+  lastDate=target;
 });
 monthPicker.addEventListener("change",render);
-document.getElementById("newButton").addEventListener("click",function(){resetForm(localToday());});
+document.getElementById("newButton").addEventListener("click",function(){
+  if(!confirmDiscard())return;
+  var day=businessDay();
+  if(findRecord(day)){editRecord(day);toast(dayLabel(day)+"已经有记录，已打开修改");}
+  else resetForm(day);
+});
 document.getElementById("recordsBody").addEventListener("click",function(ev){
   var share=ev.target.getAttribute("data-share"), edit=ev.target.getAttribute("data-edit"), del=ev.target.getAttribute("data-delete");
   if(share){
     var x=findRecord(share);
     if(x){showShare(x);document.getElementById("sharePanel").scrollIntoView({behavior:"smooth",block:"center"});}
   }
-  if(edit)editRecord(edit);
+  if(edit&&(edit===editingDate||confirmDiscard()))editRecord(edit);
   if(del&&confirm("删除 "+del+" 的记录？")){
-    records=records.filter(function(r){return r.date!==del;});store();render();
-    if(editingDate===del)resetForm(localToday());
+    records=records.filter(function(r){return r.date!==del;});persist();render();
+    if(shareDate===del)hideShare();
+    if(editingDate===del)resetForm(businessDay());
   }
 });
 document.getElementById("copyShare").addEventListener("click",function(){
@@ -554,8 +589,8 @@ if(inWeChat){
   document.getElementById("exportCsv").textContent="复制本月表格";
   document.getElementById("downloadBackup").hidden=true;
 }
-monthPicker.value=localToday().slice(0,7);
-resetForm(localToday());
+monthPicker.value=businessDay().slice(0,7);
+resetForm(businessDay());
 render();
 checkIncoming();
 })();
